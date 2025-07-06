@@ -10,9 +10,7 @@
   - Tested with Python 3.12.2
 - **Jupyter** installation with JupyterLab and/or Juypter Notebook
   - Tested with
-    - jupyter_core: 5.7.2
     - jupyterlab: 4.x.x
-    - notebook: 7.x.x
 
 
 ## Development
