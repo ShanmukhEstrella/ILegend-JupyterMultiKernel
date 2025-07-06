@@ -1,5 +1,5 @@
 
-# Jupyter-PyLegend - A Jupyter Kernel for PyLegend Services
+# Jupyter-PyLegend - A Jupyter MultiKernel notebook for Python x Legend
 
 
 ## Installation
