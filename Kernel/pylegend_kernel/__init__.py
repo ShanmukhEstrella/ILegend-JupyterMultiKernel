@@ -1,0 +1,3 @@
+
+from .kernel import PyLegendRouterKernel
+__version__ = PyLegendRouterKernel.implementation_version
