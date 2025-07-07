@@ -11,9 +11,11 @@
 
 ### NOTEBOOK INTERFACE
 - Light Theme
-![Screenshot from 2025-07-07 01-48-59](https://github.com/user-attachments/assets/19149acd-6602-48ea-a70f-e02ff4c2e4bf)
+![image](https://github.com/user-attachments/assets/811e0ce0-d7d8-4f5a-bf75-e4b6c93a27e7)
+
 
 - Dark Theme
-![image](https://github.com/user-attachments/assets/9b1d4e95-d208-4e6f-917b-cbbae1ae2efa)
+![Screenshot from 2025-07-07 11-34-06](https://github.com/user-attachments/assets/46771abd-f1a5-4868-88b2-f4795fc47b99)
+
 
 
