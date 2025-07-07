@@ -15,7 +15,8 @@
 
 
 - Dark Theme
-![Screenshot from 2025-07-07 11-34-06](https://github.com/user-attachments/assets/46771abd-f1a5-4868-88b2-f4795fc47b99)
+![image](https://github.com/user-attachments/assets/91911cd9-f1c2-495b-b776-deafaec20636)
+
 
 
 
