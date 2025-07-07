@@ -29,8 +29,8 @@ const extension: JupyterFrontEndPlugin<void> = {
 
       .jp-InputArea-editor {
         position: relative !important;
-        padding-top: 32px !important; /* enough space for dropdown */
-        padding-left: 140px !important; /* leave space for dropdown */
+        padding-top: 32px !important;
+        padding-left: 140px !important;
       }
 
       .cell-kernel-selector-wrapper {
@@ -95,9 +95,22 @@ const extension: JupyterFrontEndPlugin<void> = {
       select.onchange = () => {
         const selected = select.value;
         const lines = cell.model.sharedModel.source.split('\n');
+
+        // Remove old kernel directive if present
         if (lines[0]?.startsWith('#Kernel:')) lines.shift();
+
+        // Update source with new directive
         if (selected) {
-          cell.model.sharedModel.source = [`#Kernel: ${selected}`, ...lines].join('\n');
+          const newSource = [`#Kernel: ${selected}`, ...lines].join('\n');
+          cell.model.sharedModel.source = newSource;
+
+          // Move cursor to second line after DOM updates
+          requestAnimationFrame(() => {
+            const editor = cell.editor;
+            if (editor) {
+              editor.setCursorPosition({ line: 1, column: 0 });
+            }
+          });
         } else {
           cell.model.sharedModel.source = lines.join('\n');
         }
