@@ -7,7 +7,7 @@ const extension: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, tracker: INotebookTracker) => {
-    console.log('Stylish Kernel Selector Activated');
+    console.log('Inline Kernel Selector Activated (Top-left Compact)');
 
     // Inject Inter font
     const fontLink = document.createElement('link');
@@ -15,7 +15,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     fontLink.rel = 'stylesheet';
     document.head.appendChild(fontLink);
 
-    // Inject theme-aware dropdown styles
+    // Inject styles
     const style = document.createElement('style');
     style.textContent = `
       select.cell-kernel-selector-dropdown option[value="Python"] {
@@ -26,38 +26,44 @@ const extension: JupyterFrontEndPlugin<void> = {
         color: rgb(21, 17, 224);
         font-weight: 600;
       }
+
+      .jp-InputArea-editor {
+        position: relative !important;
+        padding-top: 32px !important; /* enough space for dropdown */
+        padding-left: 140px !important; /* leave space for dropdown */
+      }
+
       .cell-kernel-selector-wrapper {
-        background-color: var(--jp-layout-color1);
+        position: absolute;
+        top: 6px;
+        left: 8px;
+        z-index: 20;
+        background-color: var(--jp-layout-color2);
         border: 1px solid var(--jp-border-color2);
-        border-bottom: none;
-        padding: 4px 10px;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
+        padding: 2px 6px;
+        border-radius: 4px;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         font-family: 'Inter', sans-serif;
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 500;
         color: var(--jp-ui-font-color1);
-        height: 34px;
-        overflow: hidden;
-        flex-shrink: 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        pointer-events: auto;
       }
+
       select.cell-kernel-selector-dropdown {
-        padding: 5px 10px;
-        font-size: 13px;
+        padding: 2px 6px;
+        font-size: 11px;
         font-family: 'Inter', sans-serif;
-        border-radius: 6px;
+        border-radius: 4px;
         border: 1px solid var(--jp-border-color2);
         background-color: var(--jp-layout-color0);
         color: var(--jp-ui-font-color1);
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         appearance: none;
-        margin-left: 6px;
         cursor: pointer;
-        max-width: 150px;
-        flex-shrink: 0;
+        max-width: 100px;
       }
     `;
     document.head.appendChild(style);
@@ -67,11 +73,9 @@ const extension: JupyterFrontEndPlugin<void> = {
     const addDropdown = (cell: CodeCell): void => {
       if (!cell || !cell.node || cell.model.type !== 'code') return;
 
-      // Only target our desired mime type
       const mimeType = cell.model.mimeType;
       if (mimeType !== 'text/x-pylegend') return;
 
-      // Avoid duplicate injection
       if (cell.node.querySelector('.cell-kernel-selector-wrapper')) return;
 
       const select = document.createElement('select');
@@ -84,7 +88,6 @@ const extension: JupyterFrontEndPlugin<void> = {
         select.appendChild(option);
       });
 
-      // Detect existing directive
       const codeLines = cell.model.sharedModel.source.split('\n');
       const match = codeLines[0]?.match(/^#Kernel:\s*(\S+)/);
       if (match) select.value = match[1];
@@ -104,13 +107,13 @@ const extension: JupyterFrontEndPlugin<void> = {
       wrapper.className = 'cell-kernel-selector-wrapper';
 
       const label = document.createElement('label');
-      label.textContent = 'Run with:';
+      label.textContent = 'Run:';
       wrapper.appendChild(label);
       wrapper.appendChild(select);
 
-      const inputArea = cell.node.querySelector('.jp-InputArea');
-      if (inputArea?.parentElement) {
-        inputArea.parentElement.insertBefore(wrapper, inputArea);
+      const editorHost = cell.node.querySelector('.jp-InputArea-editor');
+      if (editorHost) {
+        editorHost.appendChild(wrapper);
       }
     };
 
@@ -124,11 +127,8 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     tracker.widgetAdded.connect((_, panel: NotebookPanel) => {
       panel.revealed.then(() => {
-        // Delay until DOM is fully painted
         requestAnimationFrame(() => {
-          setTimeout(() => {
-            injectDropdowns(panel);
-          }, 0);
+          setTimeout(() => injectDropdowns(panel), 0);
         });
       });
 
