@@ -7,9 +7,9 @@ const extension: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, tracker: INotebookTracker) => {
-    console.log('Inline Kernel Selector Activated (Top-left Compact)');
+    console.log('Inline Kernel Selector Activated (Scoped Padding + Locked Directive)');
 
-    // Inject Inter font
+    // Inject font
     const fontLink = document.createElement('link');
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap';
     fontLink.rel = 'stylesheet';
@@ -27,7 +27,7 @@ const extension: JupyterFrontEndPlugin<void> = {
         font-weight: 600;
       }
 
-      .jp-InputArea-editor {
+      .jp-InputArea-editor.has-kernel-dropdown {
         position: relative !important;
         padding-top: 32px !important;
         padding-left: 140px !important;
@@ -50,7 +50,6 @@ const extension: JupyterFrontEndPlugin<void> = {
         font-weight: 500;
         color: var(--jp-ui-font-color1);
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        pointer-events: auto;
       }
 
       select.cell-kernel-selector-dropdown {
@@ -70,6 +69,16 @@ const extension: JupyterFrontEndPlugin<void> = {
 
     const availableKernels = ['-- Select Kernel --', 'Python', 'Legend'];
 
+    const enforceKernelDirective = (cell: CodeCell, expected: string) => {
+      const lines = cell.model.sharedModel.source.split('\n');
+      if (!lines[0]?.startsWith('#Kernel:')) {
+        cell.model.sharedModel.source = [`#Kernel: ${expected}`, ...lines].join('\n');
+      } else if (lines[0] !== `#Kernel: ${expected}`) {
+        lines[0] = `#Kernel: ${expected}`;
+        cell.model.sharedModel.source = lines.join('\n');
+      }
+    };
+
     const addDropdown = (cell: CodeCell): void => {
       if (!cell || !cell.node || cell.model.type !== 'code') return;
 
@@ -80,7 +89,6 @@ const extension: JupyterFrontEndPlugin<void> = {
 
       const select = document.createElement('select');
       select.className = 'cell-kernel-selector-dropdown';
-
       availableKernels.forEach(name => {
         const option = document.createElement('option');
         option.text = name;
@@ -92,33 +100,33 @@ const extension: JupyterFrontEndPlugin<void> = {
       const match = codeLines[0]?.match(/^#Kernel:\s*(\S+)/);
       if (match) select.value = match[1];
 
+      let currentKernel = select.value;
+
       select.onchange = () => {
         const selected = select.value;
         const lines = cell.model.sharedModel.source.split('\n');
-
-        // Remove old kernel directive if present
         if (lines[0]?.startsWith('#Kernel:')) lines.shift();
 
-        // Update source with new directive
         if (selected) {
-          const newSource = [`#Kernel: ${selected}`, ...lines].join('\n');
-          cell.model.sharedModel.source = newSource;
-
-          // Move cursor to second line after DOM updates
+          cell.model.sharedModel.source = [`#Kernel: ${selected}`, ...lines].join('\n');
           requestAnimationFrame(() => {
             const editor = cell.editor;
-            if (editor) {
-              editor.setCursorPosition({ line: 1, column: 0 });
-            }
+            if (editor) editor.setCursorPosition({ line: 1, column: 0 });
           });
+          currentKernel = selected;
         } else {
           cell.model.sharedModel.source = lines.join('\n');
+          currentKernel = '';
         }
       };
 
+      // Re-enforce header on change
+      cell.model.sharedModel.changed.connect(() => {
+        if (currentKernel) enforceKernelDirective(cell, currentKernel);
+      });
+
       const wrapper = document.createElement('div');
       wrapper.className = 'cell-kernel-selector-wrapper';
-
       const label = document.createElement('label');
       label.textContent = 'Run:';
       wrapper.appendChild(label);
@@ -127,6 +135,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       const editorHost = cell.node.querySelector('.jp-InputArea-editor');
       if (editorHost) {
         editorHost.appendChild(wrapper);
+        editorHost.classList.add('has-kernel-dropdown');
       }
     };
 
