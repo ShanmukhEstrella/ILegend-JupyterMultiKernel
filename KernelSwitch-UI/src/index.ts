@@ -7,15 +7,13 @@ const extension: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, tracker: INotebookTracker) => {
-    console.log('Inline Kernel Selector Activated (Scoped Padding + Locked Directive)');
+    console.log('✅ Inline Kernel Selector Activated');
 
-    // Inject font
     const fontLink = document.createElement('link');
     fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap';
     fontLink.rel = 'stylesheet';
     document.head.appendChild(fontLink);
 
-    // Inject styles
     const style = document.createElement('style');
     style.textContent = `
       select.cell-kernel-selector-dropdown option[value="Python"] {
@@ -30,7 +28,7 @@ const extension: JupyterFrontEndPlugin<void> = {
       .jp-InputArea-editor.has-kernel-dropdown {
         position: relative !important;
         padding-top: 32px !important;
-        padding-left: 140px !important;
+        padding-left: 0px !important;
       }
 
       .cell-kernel-selector-wrapper {
@@ -68,27 +66,15 @@ const extension: JupyterFrontEndPlugin<void> = {
     document.head.appendChild(style);
 
     const availableKernels = ['-- Select Kernel --', 'Python', 'Legend'];
-
-    const enforceKernelDirective = (cell: CodeCell, expected: string) => {
-      const lines = cell.model.sharedModel.source.split('\n');
-      if (!lines[0]?.startsWith('#Kernel:')) {
-        cell.model.sharedModel.source = [`#Kernel: ${expected}`, ...lines].join('\n');
-      } else if (lines[0] !== `#Kernel: ${expected}`) {
-        lines[0] = `#Kernel: ${expected}`;
-        cell.model.sharedModel.source = lines.join('\n');
-      }
-    };
+    const pythonHeader = "#Code in Python below. Don't Remove this Header!!";
 
     const addDropdown = (cell: CodeCell): void => {
       if (!cell || !cell.node || cell.model.type !== 'code') return;
-
-      const mimeType = cell.model.mimeType;
-      if (mimeType !== 'text/x-pylegend') return;
-
       if (cell.node.querySelector('.cell-kernel-selector-wrapper')) return;
 
       const select = document.createElement('select');
       select.className = 'cell-kernel-selector-dropdown';
+
       availableKernels.forEach(name => {
         const option = document.createElement('option');
         option.text = name;
@@ -96,33 +82,67 @@ const extension: JupyterFrontEndPlugin<void> = {
         select.appendChild(option);
       });
 
-      const codeLines = cell.model.sharedModel.source.split('\n');
-      const match = codeLines[0]?.match(/^#Kernel:\s*(\S+)/);
-      if (match) select.value = match[1];
+      let programmaticChange = false;
 
-      let currentKernel = select.value;
+      const applyKernelDirective = (kernelName: string) => {
+        let lines = cell.model.sharedModel.source.split('\n');
+        lines = lines.filter(line =>
+          !line.trim().startsWith('#Kernel:') && line !== pythonHeader
+        );
 
-      select.onchange = () => {
-        const selected = select.value;
-        const lines = cell.model.sharedModel.source.split('\n');
-        if (lines[0]?.startsWith('#Kernel:')) lines.shift();
+        let newLines: string[];
+        let mimeType: string;
+        let cursorLine: number;
 
-        if (selected) {
-          cell.model.sharedModel.source = [`#Kernel: ${selected}`, ...lines].join('\n');
-          requestAnimationFrame(() => {
-            const editor = cell.editor;
-            if (editor) editor.setCursorPosition({ line: 1, column: 0 });
-          });
-          currentKernel = selected;
+        if (kernelName === 'Python') {
+          newLines = [`#Kernel: Python`, pythonHeader, ...lines];
+          mimeType = 'text/x-python';
+          cursorLine = 2;
         } else {
-          cell.model.sharedModel.source = lines.join('\n');
-          currentKernel = '';
+          newLines = [...lines];  // Legend
+          mimeType = 'text/x-pylegend';
+          cursorLine = 0;
+        }
+
+        const newSource = newLines.join('\n');
+        if (cell.model.sharedModel.source === newSource) return;
+
+        programmaticChange = true;
+        cell.model.sharedModel.source = newSource;
+        cell.model.mimeType = mimeType;
+        programmaticChange = false;
+
+        requestAnimationFrame(() => {
+          cell.editor?.setCursorPosition({ line: cursorLine, column: 0 });
+        });
+      };
+
+      const updateFromHeader = () => {
+        if (programmaticChange) return;
+
+        const lines = cell.model.sharedModel.source.split('\n');
+        const first = lines[0]?.trim().toLowerCase();
+
+        if (first === '#kernel: python') {
+          select.value = 'Python';
+          applyKernelDirective('Python');
+        } else {
+          select.value = 'Legend';
+          applyKernelDirective('Legend');
         }
       };
 
-      // Re-enforce header on change
-      cell.model.sharedModel.changed.connect(() => {
-        if (currentKernel) enforceKernelDirective(cell, currentKernel);
+      select.onchange = () => {
+        const selected = select.value;
+        if (selected) {
+          applyKernelDirective(selected);
+        } else {
+          applyKernelDirective('Legend');
+        }
+      };
+
+      cell.model.contentChanged.connect(() => {
+        updateFromHeader();
       });
 
       const wrapper = document.createElement('div');
@@ -137,29 +157,28 @@ const extension: JupyterFrontEndPlugin<void> = {
         editorHost.appendChild(wrapper);
         editorHost.classList.add('has-kernel-dropdown');
       }
+
+      updateFromHeader();
     };
 
     const injectDropdowns = (panel: NotebookPanel): void => {
       panel.content.widgets.forEach(cell => {
-        if (cell.model.type === 'code') {
-          addDropdown(cell as CodeCell);
-        }
+        if (cell.model.type === 'code') addDropdown(cell as CodeCell);
       });
     };
 
     tracker.widgetAdded.connect((_, panel: NotebookPanel) => {
       panel.revealed.then(() => {
+      injectDropdowns(panel);
+      const firstCell = panel.content.widgets.find(cell => cell.model.type === 'code') as CodeCell;
+      if (firstCell) {
         requestAnimationFrame(() => {
-          setTimeout(() => injectDropdowns(panel), 0);
+          // Force update by resetting the source to itself
+          firstCell.model.sharedModel.source = firstCell.model.sharedModel.source;
         });
-      });
-
-      panel.content.model?.cells.changed.connect(() => {
-        requestAnimationFrame(() => {
-          setTimeout(() => injectDropdowns(panel), 0);
-        });
-      });
-
+      }
+    });
+      panel.content.model?.cells.changed.connect(() => injectDropdowns(panel));
       panel.content.activeCellChanged.connect(() => {
         const cell = panel.content.activeCell;
         if (cell?.model.type === 'code') addDropdown(cell as CodeCell);
