@@ -2,6 +2,11 @@ from ipykernel.kernelbase import Kernel
 from jupyter_client import KernelManager
 from queue import Empty
 import traceback
+import re
+import os
+import traceback
+import tempfile
+import pickle
 
 
 class PyLegendRouterKernel(Kernel):
@@ -14,6 +19,13 @@ class PyLegendRouterKernel(Kernel):
         'mimetype': 'text/x-pylegend',
         'codemirror_mode': 'pylegend',
     }
+    user_ns={}
+
+
+
+
+
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -23,12 +35,103 @@ class PyLegendRouterKernel(Kernel):
             'python3': 'python3'
         }
 
+
+
+
+
+
+
+
+
+    def _handle_get_command(self, code):
+        import json
+        import pandas as pd
+        pattern = r'%put\s+--var\s+(\w+)\s+in\s+(\w+)'
+        match = re.match(pattern, code.strip())
+        if not match:
+            return {
+                'status': 'error',
+                'execution_count': self.execution_count,
+                'ename': 'SyntaxError',
+                'evalue': 'Invalid %put syntax',
+                'traceback': ['Invalid syntax. Use: %put --var <source> in <target>']
+            }
+        source_var, target_var = match.groups()
+        try:
+            # Step 1: Request the variable's JSON from the Legend kernel
+            legend_kc = self._get_kernel('legend')
+            msg_id = legend_kc.execute(f"%router_json {source_var}")
+            json_string = None
+            while True:
+                msg = legend_kc.get_iopub_msg(timeout=5)
+                if msg['parent_header'].get('msg_id') != msg_id:
+                    continue
+                if msg['msg_type'] == 'stream' and msg['content'].get('name') == 'stdout':
+                    json_string = msg['content']['text'].strip()
+                elif msg['msg_type'] == 'status' and msg['content'].get('execution_state') == 'idle':
+                    break
+            if not json_string:
+                raise ValueError("No data received from Legend kernel.")
+            # Step 2: Inject code into the Python kernel to deserialize and store the variable
+            python_kc = self._get_kernel('python3')
+            escaped_json = repr(json_string)
+            import textwrap
+            escaped_json = repr(json_string)
+            inject_code = textwrap.dedent(f"""
+                import pandas as pd
+                import io
+                {target_var} = pd.read_json(io.StringIO({escaped_json}), orient='split')
+            """)
+            msg_id = python_kc.execute(inject_code)
+            # Wait until Python kernel finishes executing
+            while True:
+                msg = python_kc.get_iopub_msg(timeout=5)
+                if msg['parent_header'].get('msg_id') != msg_id:
+                    continue
+                if msg['msg_type'] == 'status' and msg['content'].get('execution_state') == 'idle':
+                    break
+            # Success Message to notebook
+            self.send_response(self.iopub_socket, 'stream', {
+                'name': 'stdout',
+                'text': f"Variable '{source_var}' from Legend loaded as '{target_var}' into Python.\n"
+            })
+            return {
+                'status': 'ok',
+                'execution_count': self.execution_count,
+                'payload': [],
+                'user_expressions': {}
+            }
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.send_response(self.iopub_socket, 'stream', {
+                'name': 'stderr',
+                'text': f"[Router Error] %put failed: {e}\n{tb}"
+            })
+            return {
+                'status': 'error',
+                'execution_count': self.execution_count,
+                'ename': type(e).__name__,
+                'evalue': str(e),
+                'traceback': tb.splitlines()
+            }
+
+
+
+    
+
+
+
+
     def _launch_kernel(self, name):
         km = KernelManager(kernel_name=name)
         km.start_kernel()
         kc = km.client()
         kc.start_channels()
         return {'manager': km, 'client': kc}
+
+
+
+
 
     def _get_kernel(self, alias):
         name = self.kernel_name_map.get(alias)
@@ -37,6 +140,9 @@ class PyLegendRouterKernel(Kernel):
         if alias not in self.kernel_map:
             self.kernel_map[alias] = self._launch_kernel(name)
         return self.kernel_map[alias]['client']
+
+
+
 
     def _extract_kernel_choice(self, code: str):
         lines = code.strip().splitlines()
@@ -48,11 +154,19 @@ class PyLegendRouterKernel(Kernel):
                 return "legend"
         return "legend"  # default
 
+
+
+
+
     def _strip_first_line(self, code: str) -> str:
         lines = code.splitlines()
         if lines and lines[0].lower().startswith("#kernel:"):
             return "\n".join(lines[1:])
         return code
+
+
+
+
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
         try:
@@ -72,58 +186,59 @@ class PyLegendRouterKernel(Kernel):
                 'evalue': str(e),
                 'traceback': tb.splitlines()
             }
+        if code.strip().startswith('%put'):
+            self._handle_get_command(code)
+        else:
+            msg_id = kc.execute(exec_code)
+            while True:
+                try:
+                    msg = kc.get_iopub_msg(timeout=10)
+                except Empty:
+                    break
+                except Exception as e:
+                    tb = traceback.format_exc()
+                    self.send_response(self.iopub_socket, 'stream', {
+                        'name': 'stderr',
+                        'text': f"[Router Error] Subkernel output error: {e}\n{tb}"
+                    })
+                    break
 
-        msg_id = kc.execute(exec_code)
-
-        while True:
-            try:
-                msg = kc.get_iopub_msg(timeout=10)
-            except Empty:
-                break
-            except Exception as e:
-                tb = traceback.format_exc()
-                self.send_response(self.iopub_socket, 'stream', {
-                    'name': 'stderr',
-                    'text': f"[Router Error] Subkernel output error: {e}\n{tb}"
-                })
-                break
-
-            if msg['parent_header'].get('msg_id') != msg_id:
-                continue
-
-            msg_type = msg['msg_type']
-            content = msg['content']
-
-            if msg_type == 'clear_output':
-                self.session.send(self.iopub_socket, msg_type, content, parent=self._parent_header)
-            elif msg_type in {'stream', 'display_data', 'execute_result', 'error'}:
-                self.session.send(self.iopub_socket, msg_type, content, parent=self._parent_header)
-            elif msg_type == 'status' and content.get('execution_state') == 'idle':
-                break
-
-        self.session.send(
-            self.shell_stream,
-            'execute_reply',
-            {
+                if msg['parent_header'].get('msg_id') != msg_id:
+                    continue
+                msg_type = msg['msg_type']
+                content = msg['content']
+                if msg_type == 'clear_output':
+                    self.session.send(self.iopub_socket, msg_type, content, parent=self._parent_header)
+                elif msg_type in {'stream', 'display_data', 'execute_result', 'error'}:
+                    self.session.send(self.iopub_socket, msg_type, content, parent=self._parent_header)
+                elif msg_type == 'status' and content.get('execution_state') == 'idle':
+                    break
+            self.session.send(
+                self.shell_stream,
+                'execute_reply',
+                {
+                    'status': 'ok',
+                    'execution_count': self.execution_count,
+                    'payload': [],
+                    'user_expressions': {}
+                },
+                parent=self._parent_header
+            )
+            return {
                 'status': 'ok',
                 'execution_count': self.execution_count,
                 'payload': [],
                 'user_expressions': {}
-            },
-            parent=self._parent_header
-        )
+            }
 
-        return {
-            'status': 'ok',
-            'execution_count': self.execution_count,
-            'payload': [],
-            'user_expressions': {}
-        }
+
+
+
+
 
     def do_complete(self, code, cursor_pos):
         kernel_choice = self._extract_kernel_choice(code)
         code_without_header = self._strip_first_line(code)
-
         # Adjust cursor position by removing header length
         adjustment = len(code.splitlines()[0]) + 1 if code.lower().startswith("#kernel:") else 0
         adjusted_cursor = max(cursor_pos - adjustment, 0)
