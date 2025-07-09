@@ -19,5 +19,7 @@
 ![image](https://github.com/user-attachments/assets/91911cd9-f1c2-495b-b776-deafaec20636)
 
 
+- Variable flow between Legend and Python
+  ![image](https://github.com/user-attachments/assets/006cabb9-43cd-4c2d-b8e3-43db68e8097a)
 
 
