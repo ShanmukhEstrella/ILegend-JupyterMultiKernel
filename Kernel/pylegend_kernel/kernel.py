@@ -24,9 +24,6 @@ class PyLegendRouterKernel(Kernel):
 
 
 
-
-
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.kernel_map = {}
@@ -34,10 +31,6 @@ class PyLegendRouterKernel(Kernel):
             'legend': 'legend_kernel',
             'python3': 'python3'
         }
-
-
-
-
 
 
 
