@@ -1,5 +1,5 @@
 {
-  "name": "jupyter-pylegend-coloring",
+  "name": "jupyter-ilegend-coloring",
   "version": "4.9.2",
   "private": true,
   "description": "A JupyterLab extension.",
@@ -8,9 +8,9 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/github_username/jupyter-pylegend-coloring",
+  "homepage": "https://github.com/github_username/jupyter-ilegend-coloring",
   "bugs": {
-    "url": "https://github.com/github_username/jupyter-pylegend-coloring/issues"
+    "url": "https://github.com/github_username/jupyter-ilegend-coloring/issues"
   },
   "license": "BSD-3-Clause",
   "author": {
@@ -26,13 +26,13 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/github_username/jupyter-pylegend-coloring.git"
+    "url": "https://github.com/github_username/jupyter-ilegend-coloring.git"
   },
   "workspaces": [
     "ui-tests"
   ],
   "scripts": {
-    "build:grammar": "lezer-generator src/pylegend.grammar -o src/pylegend.grammar.js",
+    "build:grammar": "lezer-generator src/ilegend.grammar -o src/ilegend.grammar.js",
     "build": "yarn build:grammar && rollup -c",
     "build:prod": "jlpm clean && jlpm build:lib:prod && jlpm build:labextension",
     "build:labextension": "jupyter labextension build .",
@@ -42,7 +42,7 @@
     "clean": "jlpm clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-    "clean:labextension": "rimraf pylegend-coloring/labextension pylegend-coloring/_version.py",
+    "clean:labextension": "rimraf ilegend-coloring/labextension ilegend-coloring/_version.py",
     "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -90,7 +90,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.7",
     "rimraf": "^4.4.1",
-    "rollup": "^4.44.1",
+    "rollup": "^4.44.2",
     "rollup-plugin-typescript2": "^0.36.0",
     "source-map-loader": "^1.0.2",
     "style-loader": "^3.3.1",
@@ -112,7 +112,7 @@
   },
   "jupyterlab": {
     "extension": true,
-    "outputDir": "pylegend-coloring/labextension"
+    "outputDir": "ilegend-coloring/labextension"
   },
   "eslintIgnore": [
     "node_modules",
