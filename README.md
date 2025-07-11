@@ -18,7 +18,8 @@
 
 ### NOTEBOOK INTERFACE
 - Light Theme
-![image](https://github.com/user-attachments/assets/a5288e04-284a-4466-8ad3-c7754bac96ff)
+<img width="1173" height="275" alt="image" src="https://github.com/user-attachments/assets/f87c789e-7303-432e-81ed-c38162a96c2e" />
+
 
 
 
