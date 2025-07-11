@@ -1,6 +1,6 @@
 ### DESCRIPTION
 
-- Notebook which serves [Legend](https://github.com/ShanmukhEstrella/Legend-Jupyter) and Ipython Kernel simultaneously.
+- Notebook which serves [Legend](https://github.com/ShanmukhEstrella/Legend-Jupyter) and IPython Kernel simultaneously.
 
 ### FEATURES
 - Code Autocompletions (for both Legend and Python cells)
