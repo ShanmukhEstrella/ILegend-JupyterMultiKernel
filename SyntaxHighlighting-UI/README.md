@@ -1,4 +1,4 @@
-# PyLegend-coloring using CodeMirrorv6
+# ILegend-coloring using CodeMirrorv6
 
 A JupyterLab extension.
 
