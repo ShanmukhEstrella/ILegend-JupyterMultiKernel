@@ -12,7 +12,8 @@
 - Jupyter Lab >= 4.x.x
 
 ### HOME INTERFACE
-![image](https://github.com/user-attachments/assets/b0f1a692-eeb8-4919-a8b0-53d11bfb0d08)
+<img width="1129" height="612" alt="image" src="https://github.com/user-attachments/assets/84d54369-f865-4a6a-8ba2-c9beff4338cd" />
+
 
 
 ### NOTEBOOK INTERFACE
