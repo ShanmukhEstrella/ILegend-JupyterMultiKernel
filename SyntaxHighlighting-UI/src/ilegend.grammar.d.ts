@@ -1,3 +1,3 @@
-// src/pylegend.grammar.d.ts
+// src/ilegend.grammar.d.ts
   import { LRParser } from '@lezer/lr';
   export const parser: LRParser;
