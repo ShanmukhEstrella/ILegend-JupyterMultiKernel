@@ -24,7 +24,8 @@
 
 
 - Dark Theme
-![image](https://github.com/user-attachments/assets/91911cd9-f1c2-495b-b776-deafaec20636)
+<img width="1417" height="431" alt="image" src="https://github.com/user-attachments/assets/80ea4371-c667-41b4-831d-6cbfa47b947e" />
+
 
 
 - Variable flow between Legend and Python
