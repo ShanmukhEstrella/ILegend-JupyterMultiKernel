@@ -1,5 +1,5 @@
 {
   "packageManager": "python",
-  "packageName": "pylegend-coloring",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package pylegend-coloring"
+  "packageName": "ilegend-coloring",
+  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package ilegend-coloring"
 }
