@@ -100,7 +100,7 @@ const extension: JupyterFrontEndPlugin<void> = {
           cursorLine = 2;
         } else {
           newLines = [...lines];  // Legend
-          mimeType = 'text/x-pylegend';
+          mimeType = 'text/x-ilegend';
           cursorLine = 0;
         }
 
