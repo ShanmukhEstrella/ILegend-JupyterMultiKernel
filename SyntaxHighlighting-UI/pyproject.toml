@@ -3,7 +3,7 @@ requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version"]
 build-backend = "hatchling.build"
 
 [project]
-name = "jupyter-pylegend-coloring"
+name = "jupyter-ilegend-coloring"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
@@ -32,29 +32,29 @@ source = "nodejs"
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["pylegend-coloring/labextension"]
+artifacts = ["ilegend-coloring/labextension"]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel]
 include = [
-  "pylegend_coloring/labextension/**",
+  "ilegend_coloring/labextension/**",
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"pylegend-coloring/labextension" = "share/jupyter/labextensions/jupyter-pylegend-coloring"
-"install.json" = "share/jupyter/labextensions/jupyter-pylegend-coloring/install.json"
+"ilegend-coloring/labextension" = "share/jupyter/labextensions/jupyter-ilegend-coloring"
+"install.json" = "share/jupyter/labextensions/jupyter-ilegend-coloring/install.json"
 
 [tool.hatch.build.hooks.version]
-path = "pylegend-coloring/_version.py"
+path = "ilegend-coloring/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "pylegend-coloring/labextension/static/style.js",
-    "pylegend-coloring/labextension/package.json",
+    "ilegend-coloring/labextension/static/style.js",
+    "ilegend-coloring/labextension/package.json",
 ]
-skip-if-exists = ["pylegend-coloring/labextension/static/style.js"]
+skip-if-exists = ["ilegend-coloring/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -64,7 +64,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "pylegend-coloring/labextension"
+build_dir = "ilegend-coloring/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"
