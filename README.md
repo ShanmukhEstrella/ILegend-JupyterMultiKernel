@@ -13,7 +13,7 @@
 
 
 ### REQUIREMENTS
-- Jupyter Lab >= 4.0.0
+- JupyterLab >= 4.0.0
 
 
 ### HOME INTERFACE
