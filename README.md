@@ -1,12 +1,15 @@
 ### DESCRIPTION
+- ILegend - Jupyter Kernel for Legend
 
-- Notebook which serves [Legend](https://github.com/ShanmukhEstrella/Legend-Jupyter) and IPython Kernel simultaneously.
 
 ### FEATURES
-- Code Autocompletions (for both Legend and Python cells)
-- Syntax Highlighting (for both Legend and Python cells)
-- Work simultaneously on Legend and Python.
-- Variables storing dataframes in Legend can be fetched in Python cells and can perform data-analysis on top of that!!
+- Users can query data using ILegend Kernel by using legend language in jupyter notebooks
+- It is Python implementation of Legend REPL
+- Users can load local csv files and operate on them in a similar fashion as remote data sources.
+- Users can get full benefit of legend database pushdown for queries being executed
+- Integrated IPython Kernel features into ILegend Kernel, giving capability to users to switch between languages in the same notebook session.
+- Query results from legend notebook cells will be avaialbe as pandas dataframes in subsequent python cells to continue further data analysis.
+- Syntax highlighting and auto-completion are availabe for both python and legend code within notebooks. Both light and dark theme are supported.
 
 ### REQUIREMENTS
 - Jupyter Lab >= 4.x.x
