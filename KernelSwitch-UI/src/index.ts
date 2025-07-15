@@ -2,6 +2,14 @@ import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application'
 import { INotebookTracker, NotebookPanel } from '@jupyterlab/notebook';
 import { CodeCell } from '@jupyterlab/cells';
 
+const LEGEND_MIME = 'text/x-ilegend';
+
+/* ---------- helpers -------------------------------------------------- */
+const isLegendMime = (cell: CodeCell) => cell.model.mimeType === LEGEND_MIME;
+const hasDropdown  = (cell: CodeCell) =>
+  !!cell.node.querySelector('.cell-kernel-selector-wrapper');
+
+/* --------------------------------------------------------------------- */
 const extension: JupyterFrontEndPlugin<void> = {
   id: 'cell-kernel-selector',
   autoStart: true,
@@ -9,8 +17,10 @@ const extension: JupyterFrontEndPlugin<void> = {
   activate: (app: JupyterFrontEnd, tracker: INotebookTracker) => {
     console.log('✅ Inline Kernel Selector Activated');
 
+    /* ---------- fonts & css ----------------------------------------- */
     const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap';
+    fontLink.href =
+      'https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap';
     fontLink.rel = 'stylesheet';
     document.head.appendChild(fontLink);
 
@@ -24,13 +34,11 @@ const extension: JupyterFrontEndPlugin<void> = {
         color: rgb(21, 17, 224);
         font-weight: 600;
       }
-
       .jp-InputArea-editor.has-kernel-dropdown {
         position: relative !important;
         padding-top: 32px !important;
         padding-left: 0px !important;
       }
-
       .cell-kernel-selector-wrapper {
         position: absolute;
         top: 6px;
@@ -49,7 +57,6 @@ const extension: JupyterFrontEndPlugin<void> = {
         color: var(--jp-ui-font-color1);
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
-
       select.cell-kernel-selector-dropdown {
         padding: 2px 6px;
         font-size: 11px;
@@ -65,19 +72,21 @@ const extension: JupyterFrontEndPlugin<void> = {
     `;
     document.head.appendChild(style);
 
+    /* ---------- constants ------------------------------------------- */
     const availableKernels = ['-- Select Kernel --', 'Python', 'Legend'];
-    const pythonHeader = "#Code in Python below. Don't Remove this Header!!";
+    const pythonHeader =
+      "#Code in Python below. Don't Remove this Header!!";
 
+    /* ---------- dropdown injector ----------------------------------- */
     const addDropdown = (cell: CodeCell): void => {
-      if (!cell || !cell.node || cell.model.type !== 'code') return;
-      if (cell.node.querySelector('.cell-kernel-selector-wrapper')) return;
+      if (!isLegendMime(cell) || hasDropdown(cell)) return;
 
       const select = document.createElement('select');
       select.className = 'cell-kernel-selector-dropdown';
 
       availableKernels.forEach(name => {
         const option = document.createElement('option');
-        option.text = name;
+        option.text  = name;
         option.value = name === '-- Select Kernel --' ? '' : name;
         select.appendChild(option);
       });
@@ -86,8 +95,8 @@ const extension: JupyterFrontEndPlugin<void> = {
 
       const applyKernelDirective = (kernelName: string) => {
         let lines = cell.model.sharedModel.source.split('\n');
-        lines = lines.filter(line =>
-          !line.trim().startsWith('#Kernel:') && line !== pythonHeader
+        lines = lines.filter(
+          line => !line.trim().startsWith('#Kernel:') && line !== pythonHeader
         );
 
         let newLines: string[];
@@ -95,12 +104,12 @@ const extension: JupyterFrontEndPlugin<void> = {
         let cursorLine: number;
 
         if (kernelName === 'Python') {
-          newLines = [`#Kernel: Python`, pythonHeader, ...lines];
-          mimeType = 'text/x-python';
+          newLines  = ['#Kernel: Python', pythonHeader, ...lines];
+          mimeType  = 'text/x-python';
           cursorLine = 2;
         } else {
-          newLines = [...lines];  // Legend
-          mimeType = 'text/x-ilegend';
+          newLines  = [...lines];                     // Legend
+          mimeType  = LEGEND_MIME;
           cursorLine = 0;
         }
 
@@ -112,39 +121,19 @@ const extension: JupyterFrontEndPlugin<void> = {
         cell.model.mimeType = mimeType;
         programmaticChange = false;
 
-        requestAnimationFrame(() => {
-          cell.editor?.setCursorPosition({ line: cursorLine, column: 0 });
-        });
+        cell.editor?.setCursorPosition({ line: cursorLine, column: 0 });
       };
 
       const updateFromHeader = () => {
         if (programmaticChange) return;
-
-        const lines = cell.model.sharedModel.source.split('\n');
-        const first = lines[0]?.trim().toLowerCase();
-
-        if (first === '#kernel: python') {
-          select.value = 'Python';
-          applyKernelDirective('Python');
-        } else {
-          select.value = 'Legend';
-          applyKernelDirective('Legend');
-        }
+        const firstLine = cell.model.sharedModel.source.split('\n')[0]?.trim().toLowerCase();
+        select.value = (firstLine === '#kernel: python') ? 'Python' : 'Legend';
       };
 
-      select.onchange = () => {
-        const selected = select.value;
-        if (selected) {
-          applyKernelDirective(selected);
-        } else {
-          applyKernelDirective('Legend');
-        }
-      };
+      select.onchange = () => applyKernelDirective(select.value || 'Legend');
+      cell.model.contentChanged.connect(updateFromHeader);
 
-      cell.model.contentChanged.connect(() => {
-        updateFromHeader();
-      });
-
+      /* ---- DOM ---- */
       const wrapper = document.createElement('div');
       wrapper.className = 'cell-kernel-selector-wrapper';
       const label = document.createElement('label');
@@ -161,27 +150,50 @@ const extension: JupyterFrontEndPlugin<void> = {
       updateFromHeader();
     };
 
+    /* ---------- notebook‑wide hooks --------------------------------- */
     const injectDropdowns = (panel: NotebookPanel): void => {
-      panel.content.widgets.forEach(cell => {
-        if (cell.model.type === 'code') addDropdown(cell as CodeCell);
+      panel.content.widgets.forEach(c => {
+        if (c.model.type === 'code') addDropdown(c as CodeCell);
       });
     };
 
     tracker.widgetAdded.connect((_, panel: NotebookPanel) => {
-      panel.revealed.then(() => {
-      injectDropdowns(panel);
-      const firstCell = panel.content.widgets.find(cell => cell.model.type === 'code') as CodeCell;
-      if (firstCell) {
-        requestAnimationFrame(() => {
-          // Force update by resetting the source to itself
-          firstCell.model.sharedModel.source = firstCell.model.sharedModel.source;
-        });
-      }
-    });
+      /* load as soon as the notebook model is ready (faster than revealed) */
+      panel.context.ready.then(() => {
+        injectDropdowns(panel);
+
+        /* attach to each existing code cell’s 'rendered' signal
+           so any late‑created editors get the dropdown immediately */
+        panel.content.widgets.forEach(c => {
+        if (c.model.type === 'code') {
+          requestAnimationFrame(() => addDropdown(c as CodeCell));
+        }
+      });
+      });
+
+      /* when a cell is added to the model */
       panel.content.model?.cells.changed.connect(() => injectDropdowns(panel));
+
+      /* when user switches active cell */
       panel.content.activeCellChanged.connect(() => {
         const cell = panel.content.activeCell;
         if (cell?.model.type === 'code') addDropdown(cell as CodeCell);
+      });
+    });
+
+    /* ---------- mime‑type watcher: remove dropdown if mime changes --- */
+    tracker.currentChanged.connect(() => {
+      const panel = tracker.currentWidget;
+      if (!panel) return;
+      panel.content.widgets.forEach(cell => {
+        if (cell.model.type !== 'code') return;
+        const codeCell = cell as CodeCell;
+        if (hasDropdown(codeCell) && !isLegendMime(codeCell)) {
+          const wrapper = codeCell.node.querySelector('.cell-kernel-selector-wrapper');
+          wrapper?.remove();
+          codeCell.node.querySelector('.jp-InputArea-editor')
+            ?.classList.remove('has-kernel-dropdown');
+        }
       });
     });
   }
