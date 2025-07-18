@@ -16,6 +16,28 @@
 - JupyterLab >= 4.0.0
 
 
+### INSTALLATION
+For ILegend-Kernel to install in your virtual environment, follow the steps:
+- Activate your virtual environment
+- ```
+  pip install ilegend-kernel
+  python -m ilegend_kernel.install
+  ```
+For KernelSwitch-UI lab extenstion to install, follow the steps:
+- ```
+  pip install ilegend-cell-ui
+  jupyter lab build
+  ```
+For Legend-SyntaxHighlighting lab extenstion to install, follow the steps:
+- ```
+  pip install ilegend-syntax-coloring
+  jupyter lab build
+  ```
+
+Now you can see the features below!!
+You can start using the ILegend Kernel now!!
+
+
 ### HOME INTERFACE
 <img width="855" height="542" alt="image" src="https://github.com/user-attachments/assets/03fd7bf0-e071-405a-91f4-c9729c6d5b2e" />
 
