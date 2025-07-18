@@ -16,7 +16,7 @@
 - JupyterLab >= 4.0.0
 
 
-### INSTALLATION
+### USER INSTALLATION
 For ILegend-Kernel to install in your virtual environment, follow the steps:
 - Activate your virtual environment
 - ```
