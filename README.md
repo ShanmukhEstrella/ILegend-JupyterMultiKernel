@@ -35,7 +35,6 @@ For Legend-SyntaxHighlighting lab extenstion to install, follow the steps:
   ```
 
 
-### UN-INSTALLATION
 To uninstall ILegend Kernel:
 - ```
   pip uninstall ilegend-kernel
