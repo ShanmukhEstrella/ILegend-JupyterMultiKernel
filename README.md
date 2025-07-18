@@ -34,6 +34,17 @@ For Legend-SyntaxHighlighting lab extenstion to install, follow the steps:
   jupyter lab build
   ```
 
+
+### UN-INSTALLATION
+To uninstall ILegend Kernel:
+- ```
+  pip uninstall ilegend-kernel
+  jupyter kernelspec remove ilegend-kernel
+  ```
+
+
+
+  
 Now you can see the features below!!
 You can start using the ILegend Kernel now!!
 
