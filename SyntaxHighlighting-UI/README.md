@@ -6,7 +6,7 @@ A JupyterLab extension.
 
 - JupyterLab >= 4.0.0
 
-## Install
+## Developer Install
 
 To install the extension, execute:
 
