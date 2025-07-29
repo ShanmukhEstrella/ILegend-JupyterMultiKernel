@@ -2,7 +2,7 @@
 - Jupyter Lab >= 4.x.x
 
 
-### Installation
+### Developer Installation
 - Clone the repository.
 - Run the commands:
   ```
